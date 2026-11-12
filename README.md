@@ -74,7 +74,7 @@ Want to see the agents work before getting Gemini or Tavily keys? Demo mode repl
 ```bash
 cd frontend
 npm ci
-VITE_DEMO_MODE=1 npm run dev
+npm run demo
 ```
 Open http://localhost:5173 and press **Start research**.
 
@@ -84,7 +84,7 @@ cd backend && pip install -r requirements.txt && DEMO_MODE=1 uvicorn app.main:ap
 cd frontend && npm ci && npm run dev    # second terminal
 ```
 
-A static demo can be hosted for free: deploy `frontend/` to Vercel or Netlify with `VITE_DEMO_MODE=1` and no backend.
+A static demo can be hosted for free: deploy `frontend/` to Vercel or Netlify with build command `npm run build:demo` (or set `VITE_DEMO_MODE=1`) and no backend.
 
 ## Getting started
 
