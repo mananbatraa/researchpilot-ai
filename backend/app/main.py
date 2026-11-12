@@ -6,9 +6,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from .config import settings
-from .agents import workflow, STEPS
+from .agents import workflow as live_workflow, STEPS
+from .demo import DemoWorkflow, DEMO_DISCLAIMER
 
 DISCLAIMER = "AI-generated research can be incomplete or incorrect. Verify important claims against the linked primary sources."
+
+workflow = DemoWorkflow() if settings.demo_mode else live_workflow
 
 app = FastAPI(title="ResearchPilot AI", version="0.2.0", description="A source-grounded multi-agent research assistant")
 app.add_middleware(
@@ -26,18 +29,20 @@ class ResearchRequest(BaseModel):
 
 
 def _require_keys() -> None:
+    if settings.demo_mode:
+        return
     missing = [name for name, value in (("GEMINI_API_KEY", settings.gemini_api_key), ("TAVILY_API_KEY", settings.tavily_api_key)) if not value]
     if missing:
         raise HTTPException(status_code=503, detail=f"Configure {', '.join(missing)} on the backend (backend/.env locally, or your host's environment variables) before running research.")
 
 
 def _result(question: str, state: dict[str, Any]) -> dict[str, Any]:
-    return {"question": question, "report": state.get("report", ""), "analysis": state.get("analysis", ""), "fact_check": state.get("fact_check", ""), "sources": state.get("sources", []), "disclaimer": DISCLAIMER}
+    return {"question": question, "report": state.get("report", ""), "analysis": state.get("analysis", ""), "fact_check": state.get("fact_check", ""), "sources": state.get("sources", []), "disclaimer": DEMO_DISCLAIMER if settings.demo_mode else DISCLAIMER, "demo": settings.demo_mode}
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "researchpilot-ai"}
+    return {"status": "ok", "service": "researchpilot-ai", "demo_mode": settings.demo_mode}
 
 
 @app.post("/api/research")

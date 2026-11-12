@@ -66,6 +66,26 @@ The UI shows the final report **and** lets you expand the raw analysis and fact-
 | Testing | pytest, FastAPI TestClient |
 | Deployment | Docker (Render / Railway / Fly) + Vercel / Netlify for the frontend |
 
+## Try it without API keys (demo mode)
+
+Want to see the agents work before getting Gemini or Tavily keys? Demo mode replays a pre-recorded, source-cited sample run with the same streamed steps. Every question gets the same sample answer, and the UI labels it clearly.
+
+**Frontend only, no backend at all:**
+```bash
+cd frontend
+npm ci
+VITE_DEMO_MODE=1 npm run dev
+```
+Open http://localhost:5173 and press **Start research**.
+
+**Full stack, no keys** (exercises the real SSE endpoint):
+```bash
+cd backend && pip install -r requirements.txt && DEMO_MODE=1 uvicorn app.main:app --reload
+cd frontend && npm ci && npm run dev    # second terminal
+```
+
+A static demo can be hosted for free: deploy `frontend/` to Vercel or Netlify with `VITE_DEMO_MODE=1` and no backend.
+
 ## Getting started
 
 **Requirements:** Python 3.11+, Node 20+, a [Gemini API key](https://aistudio.google.com/apikey) and a [Tavily API key](https://tavily.com).
@@ -109,6 +129,7 @@ The backend and frontend deploy separately. Deploy the backend first so you have
 | `CORS_ORIGINS` | your frontend URL, e.g. `https://researchpilot.vercel.app` (comma-separate several; no trailing slash) |
 | `CORS_ORIGIN_REGEX` | optional, e.g. `https://researchpilot-.*\.vercel\.app` to allow Vercel preview deploys |
 | `GEMINI_MODEL` | optional, defaults to `gemini-2.5-flash` |
+| `DEMO_MODE` | optional, `1` serves the canned sample run with no keys |
 
 Without Docker, use build command `pip install -r requirements.txt` and start command `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Check `https://<your-api>/health` returns `{"status":"ok"}`.
 
@@ -117,6 +138,7 @@ Without Docker, use build command `pip install -r requirements.txt` and start co
 | Variable | Value |
 |---|---|
 | `VITE_API_URL` | your backend URL, e.g. `https://researchpilot-api.onrender.com` |
+| `VITE_DEMO_MODE` | optional, `1` runs the UI standalone with the sample run (no backend needed) |
 
 `VITE_*` variables are baked in at build time, so redeploy the frontend after changing it. Then add the frontend's final URL to the backend's `CORS_ORIGINS`.
 
@@ -174,6 +196,7 @@ Response shape:
 │   ├── app/
 │   │   ├── main.py        # FastAPI app, request validation, error handling
 │   │   ├── agents.py      # LangGraph workflow and the four agents
+│   │   ├── demo.py        # Keyless demo mode (replays demo_data.json)
 │   │   └── config.py      # Environment-based settings
 │   ├── tests/test_api.py
 │   ├── Dockerfile
@@ -183,6 +206,7 @@ Response shape:
     ├── src/
     │   ├── App.tsx        # Research form, live agent pipeline, report view, sources
     │   ├── api.ts         # API URL from VITE_API_URL, SSE stream reader
+    │   ├── demo/          # In-browser demo mode (VITE_DEMO_MODE)
     │   ├── main.tsx
     │   └── style.css
     ├── .env.example

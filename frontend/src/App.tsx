@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { streamResearch, type Result, type Source, type StepName } from './api';
+import { DEMO_MODE, streamResearch, type Result, type Source, type StepName } from './api';
 
 type StepStatus = 'pending' | 'running' | 'done' | 'error';
 const STEPS: { id: StepName; label: string; running: string }[] = [
@@ -47,6 +47,7 @@ export default function App() {
   return <main className="shell">
     <nav><div className="brand"><span className="brandmark">R</span> ResearchPilot <span className="tag">AI RESEARCH WORKSPACE</span></div><span className="status"><i/> Multi-agent workflow</span></nav>
     <section className="hero"><p className="eyebrow">FROM QUESTION TO EVIDENCE</p><h1>Research, with a team<br/>of AI specialists.</h1><p className="sub">A research agent gathers sources. Analysts synthesize the evidence. A fact-checker challenges the findings. One report brings it together.</p></section>
+    {(DEMO_MODE || result?.demo) && <div className="demobanner"><b>Demo mode</b> No API keys are used. Every question replays the same pre-recorded sample run so you can see how the agents work.</div>}
     <form className="prompt" onSubmit={runResearch}><label htmlFor="question">WHAT SHOULD WE INVESTIGATE?</label><textarea id="question" value={question} onChange={e=>setQuestion(e.target.value)} minLength={12} maxLength={1000}/><div className="formbottom"><span>Be specific. Reports include linked sources and evidence limitations.</span><button disabled={loading || question.trim().length < 12}>{loading ? 'Researching…' : 'Start research ↗'}</button></div></form>
     {started && <ol className="pipeline" aria-live="polite">{STEPS.map((step, i) => {
       const s = status[step.id];

@@ -4,6 +4,8 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     tavily_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
+    # DEMO_MODE=1 replays a canned sample run with no Gemini/Tavily calls (no keys needed).
+    demo_mode: bool = False
     # Comma-separated list of origins allowed to call the API, e.g.
     # "https://researchpilot.vercel.app,http://localhost:5173"
     cors_origins: str = "http://localhost:5173"

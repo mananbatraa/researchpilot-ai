@@ -1,8 +1,13 @@
 export type Source = { id: string; title: string; url: string; content: string };
-export type Result = { question: string; report: string; analysis: string; fact_check: string; sources: Source[]; disclaimer: string };
+export type Result = { question: string; report: string; analysis: string; fact_check: string; sources: Source[]; disclaimer: string; demo?: boolean };
 export type StepName = 'research' | 'analyze' | 'fact_check' | 'report';
 export type StepEvent = { step: StepName; status: 'running' | 'done'; output?: Partial<Result> };
 export type ErrorEvent = { step: StepName; detail: string };
+
+import { simulateResearch } from './demo/simulate';
+
+/** VITE_DEMO_MODE=1 runs entirely in the browser with a canned sample: no backend, no API keys. */
+export const DEMO_MODE = ['1', 'true'].includes((import.meta.env.VITE_DEMO_MODE || '').toLowerCase());
 
 export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
@@ -10,6 +15,7 @@ type Handlers = { onStep: (e: StepEvent) => void; onResult: (r: Result) => void;
 
 /** POSTs a question and reads the Server-Sent Events stream (EventSource can't POST, so we parse it by hand). */
 export async function streamResearch(question: string, maxResults: number, handlers: Handlers, signal?: AbortSignal) {
+  if (DEMO_MODE) return simulateResearch(handlers, signal);
   const response = await fetch(`${API_URL}/api/research/stream`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },

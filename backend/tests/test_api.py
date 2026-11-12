@@ -81,3 +81,28 @@ def test_cors_origins_parsed_from_comma_list():
 def test_cors_allows_configured_origin():
     response = client.options('/api/research/stream', headers={'Origin': 'http://localhost:5173', 'Access-Control-Request-Method': 'POST'})
     assert response.headers.get('access-control-allow-origin') == 'http://localhost:5173'
+
+
+def test_demo_mode_streams_sample_without_keys(monkeypatch):
+    from app.demo import DemoWorkflow, SAMPLE
+    monkeypatch.setattr(main.settings, 'demo_mode', True)
+    monkeypatch.setattr(main.settings, 'gemini_api_key', '')
+    monkeypatch.setattr(main.settings, 'tavily_api_key', '')
+    monkeypatch.setattr(main, 'workflow', DemoWorkflow(step_delay=0))
+    events = _parse_sse(client.post('/api/research/stream', json={'question': 'Anything at all, long enough?'}).text)
+    done = [data['step'] for name, data in events if name == 'step' and data['status'] == 'done']
+    assert done == ['research', 'analyze', 'fact_check', 'report']
+    name, result = events[-1]
+    assert name == 'result' and result['demo'] is True
+    assert result['report'] == SAMPLE['report']
+    assert client.post('/api/research', json={'question': 'Anything at all, long enough?'}).json()['demo'] is True
+
+
+def test_demo_sources_are_all_cited_and_frontend_copy_matches():
+    from pathlib import Path
+    from app.demo import SAMPLE
+    for source in SAMPLE['sources']:
+        assert f"[{source['id']}]" in SAMPLE['report']
+        assert source['url'] in SAMPLE['report']
+    frontend_copy = Path(__file__).parents[2] / 'frontend' / 'src' / 'demo' / 'demo_data.json'
+    assert json.loads(frontend_copy.read_text()) == SAMPLE
