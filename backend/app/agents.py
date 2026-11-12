@@ -50,6 +50,9 @@ def report_agent(state: ResearchState) -> dict[str, str]:
     return {"report": _llm(prompt)}
 
 
+STEPS = ["research", "analyze", "fact_check", "report"]
+
+
 def build_graph():
     graph = StateGraph(ResearchState)
     graph.add_node("research", research_agent)
